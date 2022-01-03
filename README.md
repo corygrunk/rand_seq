@@ -2,6 +2,7 @@
 generative sequencer for monome norns. cycles between two sound sources.
 
 ## instructions
+### controls
 - key 2: pause / resume
 - enc 2: bias note a/b
 - enc 3: trigger probability
