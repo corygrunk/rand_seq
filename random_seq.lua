@@ -14,9 +14,14 @@ MusicUtil = require("musicutil")
 engine.name = "PolyPerc"
 
 options_a = {}
-options_a.OUTPUT = {"audio", "crow out 1+2", "crow out 3+4", "crow ii JF"}
+options_a.OUTPUT = {"audio", "midi", "crow out 1+2", "crow out 3+4", "crow ii JF"}
 options_b = {}
-options_b.OUTPUT = {"audio", "crow out 1+2", "crow out 3+4", "crow ii JF"}
+options_b.OUTPUT = {"audio", "midi", "crow out 1+2", "crow out 3+4", "crow ii JF"}
+
+local active_notes_a = {}
+local active_notes_b = {}
+local current_midi_channel_a = 1
+local current_midi_channel_b = 1
 
 -- we can extract a list of scale names from musicutil using the following
 scale_names = {}
@@ -33,10 +38,23 @@ skipping_note = false
 current_note_name = ''
 
 function init()
-  engine.release(2)
+
   screen.font_face(10)
+  engine.release(2)
   crow.output[1].action = 'pulse(0.02,5)'
   crow.output[3].action = 'pulse(0.02,5)'
+
+  midi_device = {} -- container for connected midi devices
+  midi_device_names = {}
+  target_midi_device_a = 1
+  target_midi_device_b = 1
+  for i = 1,#midi.vports do -- query all ports
+    midi_device[i] = midi.connect(i) -- connect each device
+    local full_name =
+    table.insert(midi_device_names,"port "..i..": "..util.trim_string_to_width(midi_device[i].name,40)) -- register its name
+  end
+
+  params:add_separator("random probability seq")
 
   -- setting root notes using params
   params:add{type = "number", id = "root_note", name = "root note",
@@ -55,9 +73,25 @@ function init()
 
   -- setting output options
   params:add{type = "option", id = "output_a", name = "output a",
-    options = options_a.OUTPUT, default = 1}
+    options = options_a.OUTPUT, default = 1, action = function() note_off_a() end}
   params:add{type = "option", id = "output_b", name = "output b",
-    options = options_b.OUTPUT, default = 1}
+    options = options_b.OUTPUT, default = 1, action = function() note_off_b() end}
+
+  params:add_separator("midi device settings")
+
+  -- midi options - a
+  params:add_option("midi device a", "midi device a", midi_device_names,1)
+  params:set_action("midi device a", function(x) note_off_a(); target_midi_device_a = x end)
+
+  params:add{type = "number", id = "midi_out_channel_a", name = "midi out channel a",
+    min = 1, max = 16, default = 1, action = function(value) note_off_a(); current_midi_channel_a = value end}
+
+  -- midi options - b
+  params:add_option("midi device b", "midi device b", midi_device_names,1)
+  params:set_action("midi device b", function(x) note_off_b(); target_midi_device_b = x end)
+
+  params:add{type = "number", id = "midi_out_channel_b", name = "midi out channel b",
+    min = 1, max = 16, default = 1, action = function(value) note_off_b(); current_midi_channel_b = value end}
 
   build_scale() -- builds initial scale
   play = clock.run(play_notes) -- starts the clock coroutine which plays a random note from the scale
@@ -69,6 +103,7 @@ function build_scale()
   notes_freq = MusicUtil.note_nums_to_freqs(notes_nums) -- converts note numbers to an array of frequencies
 end
 
+
 function play_notes()
   while true do
     clock.sync(1/2)
@@ -78,6 +113,8 @@ function play_notes()
 
     local note_a = notes_freq[rnd]
     local note_b = notes_freq[rnd]/2 -- transposing note down an octave
+    local midi_note_a = current_note_num
+    local midi_note_b = current_note_num
     local crow_note_a = (current_note_num-60)/12
     local crow_note_b = (current_note_num-60)/12
 
@@ -93,18 +130,24 @@ function play_notes()
           engine.hz(note_a)
         end
 
-        if params:get('output_a') == 2 then
+        if params:get('output_a') == 2 then -- midi
+          note_off_a()
+          midi_device[target_midi_device_a]:note_on(midi_note_a,100,params:get('midi_out_channel_a')) -- defaults to velocity 100 on ch 1
+          table.insert(active_notes_a, midi_note_a)
+        end
+
+        if params:get('output_a') == 3 then
           crow.output[2].volts = crow_note_a -- crow 1+2
           crow.output[1].execute()
         end
 
-        if params:get('output_a') == 3 then
+        if params:get('output_a') == 4 then
           crow.output[4].volts = crow_note_a -- crow 3+4
           crow.output[3].execute()
         end
 
-        if params:get('output_a') == 4 then
-          crow.ii.jf.play_note(crow_note_a, 5)
+        if params:get('output_a') == 5 then
+          crow.ii.jf.play_note(crow_note_a, 5) -- jf
         end
 
         playing_note_a = true
@@ -115,19 +158,26 @@ function play_notes()
           engine.hz(note_b)
         end
 
-        if params:get('output_b') == 2 then
+        if params:get('output_b') == 2 then -- midi
+          note_off_b()
+          midi_device[target_midi_device_b]:note_on(midi_note_b,100,params:get('midi_out_channel_b')) -- defaults to velocity 100 on ch 1
+          table.insert(active_notes_b, midi_note_b)
+        end
+
+        if params:get('output_b') == 3 then
           crow.output[2].volts = crow_note_b -- crow 1+2
           crow.output[1].execute()
         end
 
-        if params:get('output_b') == 3 then
+        if params:get('output_b') == 4 then
           crow.output[4].volts = crow_note_b -- crow 3+4
           crow.output[3].execute()
         end
 
-        if params:get('output_b') == 4 then
+        if params:get('output_b') == 5 then
           crow.ii.jf.play_note(crow_note_b, 5)
         end
+
         playing_note_a = false
       end
     else
@@ -137,9 +187,31 @@ function play_notes()
   end
 end
 
+function note_off_a()
+  for _, a in pairs(active_notes_a) do
+    midi_device[target_midi_device_a]:note_off(a,nil,current_midi_channel_a)
+  end
+  active_notes_a = {}
+end
+
+function note_off_b()
+  for _, a in pairs(active_notes_b) do
+    midi_device[target_midi_device_b]:note_off(a,nil,current_midi_channel_b)
+  end
+  active_notes_b = {}
+end
+
+function all_notes_off()
+  if params:get("output_a") == 2 or params:get("output_b") == 2 then
+    note_off_a()
+    note_off_b()
+  end
+end
+
 function stop_play() -- stops the coroutine playing the notes
   clock.cancel(play)
   playing = false
+  all_notes_off()
   redraw()
 end
 
@@ -194,7 +266,7 @@ function redraw()
   screen.level(15)
   screen.move(64,32)
 
-  if params:get('output_a') == 4 or params:get('output_b') == 4 then
+  if params:get('output_a') == 5 or params:get('output_b') == 5 then
     crow.ii.jf.mode(1)
   else
     crow.ii.jf.mode(0)
