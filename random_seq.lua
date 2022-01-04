@@ -9,14 +9,13 @@
 -- crow output 3: trig b
 -- crow output 4: 1v/oct note b
 
-
 MusicUtil = require("musicutil")
 engine.name = "PolyPerc"
 
 options_a = {}
-options_a.OUTPUT = {"audio", "midi", "crow out 1+2", "crow out 3+4", "crow ii JF"}
+options_a.OUTPUT = {"audio", "midi", "midi + audio", "crow out 1+2", "crow out 3+4", "crow ii JF"}
 options_b = {}
-options_b.OUTPUT = {"audio", "midi", "crow out 1+2", "crow out 3+4", "crow ii JF"}
+options_b.OUTPUT = {"audio", "midi", "midi + audio", "crow out 1+2", "crow out 3+4", "crow ii JF"}
 
 local active_notes_a = {}
 local active_notes_b = {}
@@ -73,9 +72,9 @@ function init()
 
   -- setting output options
   params:add{type = "option", id = "output_a", name = "output a",
-    options = options_a.OUTPUT, default = 1, action = function() note_off_a() end}
+    options = options_a.OUTPUT, default = 1, action = function() note_off_a() end }
   params:add{type = "option", id = "output_b", name = "output b",
-    options = options_b.OUTPUT, default = 1, action = function() note_off_b() end}
+    options = options_b.OUTPUT, default = 1, action = function() note_off_b() end }
 
   params:add_separator("midi device settings")
 
@@ -136,17 +135,25 @@ function play_notes()
           table.insert(active_notes_a, midi_note_a)
         end
 
-        if params:get('output_a') == 3 then
+        if params:get('output_a') == 3 then -- midi + audio
+          note_off_a()
+          engine.release(0.2)
+          engine.hz(note_a)
+          midi_device[target_midi_device_a]:note_on(midi_note_a,100,params:get('midi_out_channel_a')) -- defaults to velocity 100 on ch 1
+          table.insert(active_notes_a, midi_note_a)
+        end
+
+        if params:get('output_a') == 4 then
           crow.output[2].volts = crow_note_a -- crow 1+2
           crow.output[1].execute()
         end
 
-        if params:get('output_a') == 4 then
+        if params:get('output_a') == 5 then
           crow.output[4].volts = crow_note_a -- crow 3+4
           crow.output[3].execute()
         end
 
-        if params:get('output_a') == 5 then
+        if params:get('output_a') == 6 then
           crow.ii.jf.play_note(crow_note_a, 5) -- jf
         end
 
@@ -164,17 +171,25 @@ function play_notes()
           table.insert(active_notes_b, midi_note_b)
         end
 
-        if params:get('output_b') == 3 then
+        if params:get('output_b') == 3 then -- midi + audio
+          note_off_b()
+          engine.release(1.5)
+          engine.hz(note_b)
+          midi_device[target_midi_device_b]:note_on(midi_note_b,100,params:get('midi_out_channel_b')) -- defaults to velocity 100 on ch 1
+          table.insert(active_notes_b, midi_note_b)
+        end
+
+        if params:get('output_b') == 4 then
           crow.output[2].volts = crow_note_b -- crow 1+2
           crow.output[1].execute()
         end
 
-        if params:get('output_b') == 4 then
+        if params:get('output_b') == 5 then
           crow.output[4].volts = crow_note_b -- crow 3+4
           crow.output[3].execute()
         end
 
-        if params:get('output_b') == 5 then
+        if params:get('output_b') == 6 then
           crow.ii.jf.play_note(crow_note_b, 5)
         end
 
@@ -202,7 +217,7 @@ function note_off_b()
 end
 
 function all_notes_off()
-  if params:get("output_a") == 2 or params:get("output_b") == 2 then
+  if params:get("output_a") == 2 or params:get("output_a") == 3 or params:get("output_b") == 2 or params:get("output_b") == 3 then
     note_off_a()
     note_off_b()
   end
@@ -266,7 +281,7 @@ function redraw()
   screen.level(15)
   screen.move(64,32)
 
-  if params:get('output_a') == 5 or params:get('output_b') == 5 then
+  if params:get('output_a') == 6 or params:get('output_b') == 6 then
     crow.ii.jf.mode(1)
   else
     crow.ii.jf.mode(0)
