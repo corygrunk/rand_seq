@@ -154,7 +154,7 @@ function play_notes()
         end
 
         if params:get('output_a') == 6 then
-          crow.ii.jf.play_note(crow_note_a, 5) -- jf
+          crow.ii.jf.play_note(crow_note_a, 4) -- jf
         end
 
         playing_note_a = true
@@ -190,7 +190,7 @@ function play_notes()
         end
 
         if params:get('output_b') == 6 then
-          crow.ii.jf.play_note(crow_note_b, 5)
+          crow.ii.jf.play_note(crow_note_b, 4)
         end
 
         playing_note_a = false
