@@ -1,5 +1,8 @@
 -- random probability seq
 --
+-- v1.0.0 @corygrunk
+-- https://github.com/corygrunk/norns-random-prob-seq
+--
 -- key 2: pause / resume
 -- enc 2: bias note a/b
 -- enc 3: trigger probability
