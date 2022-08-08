@@ -1,5 +1,5 @@
 # norns-random-prob-seq
-generative sequencer for monome norns that used bernoulli gates. cycles between two sound sources.
+generative sequencer for monome norns that uses bernoulli gates to cycle between two sound sources.
 
 ## instructions
 ### controls
