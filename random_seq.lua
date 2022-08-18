@@ -13,7 +13,10 @@
 -- crow output 4: 1v/oct note b
 
 MusicUtil = require("musicutil")
+
 engine.name = "PolyPerc"
+note_a_rel = 0.2
+note_b_rel = 2
 
 options_a = {}
 options_a.OUTPUT = {"audio", "midi", "midi + audio", "crow out 1+2", "crow out 3+4", "crow ii JF"}
@@ -40,9 +43,8 @@ skipping_note = false
 current_note_name = ''
 
 function init()
-
+  
   screen.font_face(10)
-  engine.release(2)
   crow.output[1].action = 'pulse(0.02,5)'
   crow.output[3].action = 'pulse(0.02,5)'
 
@@ -128,7 +130,7 @@ function play_notes()
       if prob < randProb then
         -- PLAY NOTE 1
         if params:get('output_a') == 1 then -- Norns audio
-          engine.release(0.2)
+          engine.release(note_a_rel)
           engine.hz(note_a)
         end
 
@@ -140,7 +142,7 @@ function play_notes()
 
         if params:get('output_a') == 3 then -- midi + audio
           note_off_a()
-          engine.release(0.2)
+          engine.release(note_a_rel)
           engine.hz(note_a)
           midi_device[target_midi_device_a]:note_on(midi_note_a,100,params:get('midi_out_channel_a')) -- defaults to velocity 100 on ch 1
           table.insert(active_notes_a, midi_note_a)
@@ -158,13 +160,14 @@ function play_notes()
 
         if params:get('output_a') == 6 then
           crow.ii.jf.play_note(crow_note_a, 4) -- jf
+          crow.output[1].execute()
         end
 
         playing_note_a = true
       else
       -- PLAY NOTE 2
         if params:get('output_b') == 1 then -- Norns audio
-          engine.release(1.5)
+          engine.release(note_b_rel)
           engine.hz(note_b)
         end
 
@@ -176,7 +179,7 @@ function play_notes()
 
         if params:get('output_b') == 3 then -- midi + audio
           note_off_b()
-          engine.release(1.5)
+          engine.release(note_b_rel)
           engine.hz(note_b)
           midi_device[target_midi_device_b]:note_on(midi_note_b,100,params:get('midi_out_channel_b')) -- defaults to velocity 100 on ch 1
           table.insert(active_notes_b, midi_note_b)
@@ -194,6 +197,7 @@ function play_notes()
 
         if params:get('output_b') == 6 then
           crow.ii.jf.play_note(crow_note_b, 4)
+          crow.output[3].execute()
         end
 
         playing_note_a = false
@@ -234,12 +238,13 @@ function stop_play() -- stops the coroutine playing the notes
 end
 
 function enc(n,d) -- Encoder probability
-  -- encoder 1 (prob)
+  -- encoder 2 (prob)
   if  n == 2 then
     prob = prob + d
     if prob > 100 then prob = 100 end
     if prob < 0 then prob = 0 end
     redraw()
+  -- encoder 3 (prob)
   elseif n == 3 then
     prob_skip = prob_skip + d
     prob_skip_rev = prob_skip_rev - d
@@ -261,6 +266,8 @@ function key(n,z)
     end
   end
 end
+
+
 
 function draw_note()
   if skipping_note == true then
