@@ -1,4 +1,4 @@
-# norns-random-prob-seq
+# rand-seq
 generative sequencer for monome norns that uses bernoulli gates to cycle between two sound sources.
 
 ## instructions
