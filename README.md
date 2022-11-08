@@ -8,7 +8,7 @@ generative sequencer for monome norns that uses bernoulli gates to cycle between
 - enc 3: trigger probability
 
 ### crow impelmentation
-- crow output 1: trig a
-- crow output 2: 1v/oct note a
-- crow output 3: trig b
-- crow output 4: 1v/oct note b
+- crow output 1: 1v/oct note a
+- crow output 2: trig a
+- crow output 3: 1v/oct note b
+- crow output 4: trig b
