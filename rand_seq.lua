@@ -7,10 +7,10 @@
 -- enc 2: bias note a/b
 -- enc 3: trigger probability
 --
--- crow output 1: trig a
--- crow output 2: 1v/oct note a
--- crow output 3: trig b
--- crow output 4: 1v/oct note b
+-- crow output 1: 1v/oct note a
+-- crow output 2: trig a
+-- crow output 3: 1v/oct note b
+-- crow output 4: trig b
 
 MusicUtil = require("musicutil")
 
@@ -45,8 +45,8 @@ current_note_name = ''
 function init()
   
   screen.font_face(10)
-  crow.output[1].action = 'pulse(0.02,5)'
-  crow.output[3].action = 'pulse(0.02,5)'
+  crow.output[2].action = 'pulse(0.02,8)'
+  crow.output[4].action = 'pulse(0.02,8)'
 
   midi_device = {} -- container for connected midi devices
   midi_device_names = {}
@@ -149,18 +149,18 @@ function play_notes()
         end
 
         if params:get('output_a') == 4 then
-          crow.output[2].volts = crow_note_a -- crow 1+2
-          crow.output[1].execute()
+          crow.output[1].volts = crow_note_a -- crow 1+2
+          crow.output[2]()
         end
 
         if params:get('output_a') == 5 then
-          crow.output[4].volts = crow_note_a -- crow 3+4
-          crow.output[3].execute()
+          crow.output[3].volts = crow_note_a -- crow 3+4
+          crow.output[4]()
         end
 
         if params:get('output_a') == 6 then
           crow.ii.jf.play_note(crow_note_a, 4) -- jf
-          crow.output[1].execute()
+          crow.output[2]()
         end
 
         playing_note_a = true
@@ -186,18 +186,18 @@ function play_notes()
         end
 
         if params:get('output_b') == 4 then
-          crow.output[2].volts = crow_note_b -- crow 1+2
-          crow.output[1].execute()
+          crow.output[1].volts = crow_note_b -- crow 1+2
+          crow.output[2]()
         end
 
         if params:get('output_b') == 5 then
-          crow.output[4].volts = crow_note_b -- crow 3+4
-          crow.output[3].execute()
+          crow.output[3].volts = crow_note_b -- crow 3+4
+          crow.output[4]()
         end
 
         if params:get('output_b') == 6 then
           crow.ii.jf.play_note(crow_note_b, 4)
-          crow.output[3].execute()
+          crow.output[4]()
         end
 
         playing_note_a = false
